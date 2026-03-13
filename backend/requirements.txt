@@ -1,0 +1,8 @@
+Django>=4.2
+djangorestframework
+django-cors-headers
+requests
+google-generativeai
+python-dotenv
+psycopg2-binary
+whitenoise

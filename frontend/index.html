@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IzakayaReco | 今の気分に合う居酒屋を。</title>
+  <meta name="description" content="「今の気分」と「現在地」から、あなたにピッタリの居酒屋を提案します。" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@700;800;900&display=swap"
+    rel="stylesheet">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+  <!-- Three.js 3D Background Canvas -->
+  <canvas id="three-canvas"></canvas>
+
+
+  <!-- App Container -->
+  <div id="app" class="app-container">
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <a href="#/" class="nav-item active" data-page="home">
+        <span class="material-icons-round">home</span>
+        <span class="nav-label">ホーム</span>
+      </a>
+
+      <a href="#/favorites" class="nav-item" data-page="favorites">
+        <span class="material-icons-round">favorite</span>
+        <span class="nav-label">お気に入り</span>
+      </a>
+      <a href="#/mypage" class="nav-item" data-page="mypage">
+        <span class="material-icons-round">person</span>
+        <span class="nav-label">マイページ</span>
+      </a>
+    </nav>
+
+    <!-- ==================== PAGE: HOME ==================== -->
+    <div id="page-home" class="page active">
+      <!-- Hero Section with 3D overlay -->
+      <section class="hero-slider-section">
+        <div class="slider-container" id="hero-slider">
+          <div class="slide slide-1 active"></div>
+          <div class="slide slide-2"></div>
+          <div class="slide slide-3"></div>
+          <div class="slide slide-4"></div>
+        </div>
+
+        <div class="hero-overlay">
+          <div class="hero-content">
+            <h1 class="logo-title">IzakayaReco</h1>
+            <p class="hero-subtitle">
+              「今の気分」と「現在地」から、<br>
+              あなたにピッタリの居酒屋を提案します。
+            </p>
+          </div>
+          <button class="scroll-down-btn" id="scroll-down-btn" aria-label="下にスクロールして検索">
+            <span>お店を探す</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Search & Results Section -->
+      <main class="main-content">
+        <section class="search-section" id="search-section">
+          <div class="search-card glass-card">
+            <div class="card-header">
+              <span class="material-icons-round card-header-icon">tune</span>
+              <h2 class="card-title">条件を入力する</h2>
+            </div>
+
+            <form id="search-form" class="search-form">
+              <!-- Location Mode Toggle -->
+              <div class="form-group">
+                <label>場所の指定</label>
+                <div class="location-toggle">
+                  <button type="button" class="location-toggle-btn active" data-mode="gps">
+                    <span class="material-icons-round">my_location</span>
+                    <span>現在地</span>
+                  </button>
+                  <button type="button" class="location-toggle-btn" data-mode="station">
+                    <span class="material-icons-round">train</span>
+                    <span>駅名指定</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- GPS status -->
+              <div id="gps-section">
+                <div class="location-status">
+                  <div class="status-indicator" id="location-indicator"></div>
+                  <span id="location-text">位置情報を取得中...</span>
+                </div>
+              </div>
+
+              <!-- Station input -->
+              <div id="station-section" class="hidden">
+                <div class="form-group">
+                  <label for="station-input">駅名</label>
+                  <input type="text" id="station-input" class="text-input" placeholder="例: 渋谷, 新宿, 池袋">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="genre-select">ジャンル</label>
+                <div class="select-wrapper">
+                  <select id="genre-select" name="genre">
+                    <option value="">こだわらない</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group budget-range-group">
+                <label>予算</label>
+                <div class="budget-inputs">
+                  <div class="select-wrapper">
+                    <select id="budget-min-select" name="budget_min">
+                      <option value="">下限なし</option>
+                    </select>
+                  </div>
+                  <span class="range-separator">〜</span>
+                  <div class="select-wrapper">
+                    <select id="budget-max-select" name="budget_max">
+                      <option value="">上限なし</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="people-input">人数</label>
+                <input type="number" id="people-input" name="people" placeholder="例: 2" class="text-input" min="1">
+              </div>
+
+              <div class="form-group">
+                <label for="keyword-input">フリーワード・気分</label>
+                <input type="text" id="keyword-input" name="keyword" placeholder="例: 個室, デート, 静か" class="text-input">
+              </div>
+
+              <div class="form-group options-group">
+                <label>こだわり条件</label>
+                <div class="checkbox-wrapper">
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="free_drink" value="1">
+                    <span class="checkbox-custom"></span>
+                    飲み放題あり
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="free_food" value="1">
+                    <span class="checkbox-custom"></span>
+                    食べ放題あり
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" id="search-btn" class="btn primary-btn btn-block" disabled>
+                <span class="material-icons-round">near_me</span>
+                <span class="btn-text">お店を探す</span>
+                <div class="loader hidden" id="search-loader"></div>
+              </button>
+
+            </form>
+          </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" class="results-section hidden">
+          <div class="results-header">
+            <h2 class="section-title">おすすめの居酒屋</h2>
+            <div class="sort-control">
+              <select id="sort-select" class="text-input sort-select">
+                <option value="distance">距離が近い順</option>
+                <option value="recommend">おすすめ順</option>
+              </select>
+            </div>
+          </div>
+          <div id="results-container" class="results-grid">
+            <!-- Cards + pagination will be injected here -->
+          </div>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <p>Powered by HotPepper API</p>
+      </footer>
+    </div>
+
+    <!-- ==================== PAGE: LOGIN ==================== -->
+    <div id="page-login" class="page">
+      <section class="login-page">
+        <div class="login-bg-overlay"></div>
+        <div class="login-content">
+          <div class="login-brand">
+            <h1 class="logo-title">IzakayaReco</h1>
+            <p class="login-tagline">今の気分に合う居酒屋を。</p>
+          </div>
+
+          <div class="login-card glass-card">
+            <h2 class="login-card-title">ログイン</h2>
+
+            <form id="login-form" class="login-form">
+              <div class="form-group">
+                <label for="login-email">メールアドレス</label>
+                <input type="email" id="login-email" placeholder="example@email.com" class="text-input" required>
+              </div>
+              <div class="form-group">
+                <label for="login-password">パスワード</label>
+                <div class="password-wrapper">
+                  <input type="password" id="login-password" placeholder="パスワードを入力" class="text-input" required>
+                  <button type="button" class="password-toggle" id="password-toggle">
+                    <span class="material-icons-round">visibility_off</span>
+                  </button>
+                </div>
+              </div>
+              <div class="forgot-password">
+                <a href="#" class="link-muted">パスワードを忘れた方</a>
+              </div>
+
+              <button type="submit" class="btn primary-btn btn-block">
+                <span>ログイン</span>
+              </button>
+            </form>
+
+            <div class="login-divider">
+              <span>または</span>
+            </div>
+
+            <div class="social-login-buttons">
+              <button class="btn social-btn google-btn">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                  <path fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Googleでログイン</span>
+              </button>
+            </div>
+
+            <div class="login-signup">
+              <span>アカウントをお持ちでないですか？</span>
+              <a href="#" class="link-accent">新規登録</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: MYPAGE (Logged In) ==================== -->
+    <div id="page-mypage" class="page">
+      <section class="mypage">
+        <header class="mypage-header">
+          <h1 class="mypage-title">マイページ</h1>
+          <button class="icon-btn" id="settings-btn">
+            <span class="material-icons-round">settings</span>
+          </button>
+        </header>
+
+        <!-- Profile Card -->
+        <div class="profile-card glass-card">
+          <div class="profile-avatar">
+            <span class="material-icons-round avatar-icon">person</span>
+          </div>
+          <div class="profile-info">
+            <h2 class="profile-name" id="mypage-username"></h2>
+            <p class="profile-email" id="mypage-email"></p>
+          </div>
+          <a href="#/profile-edit" class="link-accent profile-edit">プロフィール編集</a>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card glass-card">
+            <span class="stat-number" id="stat-favorites">0</span>
+            <span class="stat-label">お気に入り</span>
+          </div>
+          <div class="stat-card glass-card">
+            <span class="stat-number" id="stat-reviews">0</span>
+            <span class="stat-label">レビュー</span>
+          </div>
+          <div class="stat-card glass-card">
+            <span class="stat-number" id="stat-visits">0</span>
+            <span class="stat-label">来店履歴</span>
+          </div>
+        </div>
+
+        <!-- Menu List -->
+        <div class="menu-card glass-card">
+          <a href="#/review-history" class="menu-item">
+            <span class="material-icons-round menu-icon">rate_review</span>
+            <span class="menu-text">レビュー履歴</span>
+            <span class="material-icons-round menu-arrow">chevron_right</span>
+          </a>
+          <a href="#/visit-history" class="menu-item">
+            <span class="material-icons-round menu-icon">history</span>
+            <span class="menu-text">来店履歴</span>
+            <span class="material-icons-round menu-arrow">chevron_right</span>
+          </a>
+          <a href="#/search-history" class="menu-item">
+            <span class="material-icons-round menu-icon">manage_search</span>
+            <span class="menu-text">検索履歴</span>
+            <span class="material-icons-round menu-arrow">chevron_right</span>
+          </a>
+          <a href="#/theme" class="menu-item">
+            <span class="material-icons-round menu-icon">palette</span>
+            <span class="menu-text">テーマ設定</span>
+            <span class="material-icons-round menu-arrow">chevron_right</span>
+          </a>
+        </div>
+
+        <!-- Logout -->
+        <button class="btn logout-btn btn-block" id="logout-btn">
+          <span class="material-icons-round">logout</span>
+          <span>ログアウト</span>
+        </button>
+
+        <p class="app-version">IzakayaReco Premium v1.0.0</p>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: PROFILE EDIT ==================== -->
+    <div id="page-profile-edit" class="page">
+      <section class="profile-edit-page">
+        <header class="page-header">
+          <button class="icon-btn back-btn" id="profile-edit-cancel">
+            <span class="material-icons-round">arrow_back</span>
+          </button>
+          <h1 class="page-header-title">プロフィール編集</h1>
+        </header>
+
+        <form id="profile-edit-form" class="profile-edit-form">
+          <!-- Avatar -->
+          <div class="edit-avatar-section glass-card">
+            <div class="edit-avatar">
+              <span class="material-icons-round avatar-icon">person</span>
+            </div>
+            <button type="button" class="btn-avatar-change">
+              <span class="material-icons-round">photo_camera</span>
+              <span>写真を変更</span>
+            </button>
+          </div>
+
+          <!-- Name -->
+          <div class="edit-field glass-card">
+            <div class="form-group">
+              <label for="edit-name">表示名</label>
+              <input type="text" id="edit-name" class="text-input" placeholder="お名前を入力" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-email">メールアドレス</label>
+              <input type="email" id="edit-email" class="text-input" placeholder="example@email.com" required>
+            </div>
+          </div>
+
+          <!-- Preferences -->
+          <div class="edit-field glass-card">
+            <h3 class="edit-section-title">
+              <span class="material-icons-round">restaurant</span>
+              好きなジャンル
+            </h3>
+            <div class="genre-chips">
+              <label class="chip-label"><input type="checkbox" name="fav_genre" value="izakaya"><span class="chip">🍶 居酒屋</span></label>
+              <label class="chip-label"><input type="checkbox" name="fav_genre" value="yakiniku"><span class="chip">🍖 焼肉</span></label>
+              <label class="chip-label"><input type="checkbox" name="fav_genre" value="italian"><span class="chip">🍕 イタリアン</span></label>
+              <label class="chip-label"><input type="checkbox" name="fav_genre" value="japanese"><span class="chip">🍣 和食</span></label>
+              <label class="chip-label"><input type="checkbox" name="fav_genre" value="korean"><span class="chip">🌶️ 韓国料理</span></label>
+              <label class="chip-label"><input type="checkbox" name="fav_genre" value="ramen"><span class="chip">🍜 ラーメン</span></label>
+              <label class="chip-label"><input type="checkbox" name="fav_genre" value="cafe"><span class="chip">☕ カフェ</span></label>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="edit-actions">
+            <button type="submit" class="btn primary-btn btn-block">
+              <span class="material-icons-round">save</span>
+              <span>保存する</span>
+            </button>
+            <button type="button" class="btn outline-btn btn-block" id="profile-edit-cancel-bottom">
+              <span>キャンセル</span>
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: MYPAGE GUEST (Not Logged In) ==================== -->
+    <div id="page-mypage-guest" class="page">
+      <section class="mypage">
+        <header class="mypage-header">
+          <h1 class="mypage-title">マイページ</h1>
+        </header>
+
+        <div class="login-required-card glass-card">
+          <div class="lock-icon-container">
+            <span class="material-icons-round lock-icon">person_outline</span>
+          </div>
+          <h2 class="lock-title">ログインしてください</h2>
+          <p class="lock-description">
+            マイページではプロフィールの確認や<br>
+            お気に入り店舗の管理ができます。
+          </p>
+          <a href="#/login" class="btn primary-btn btn-block" style="max-width: 280px;">
+            <span class="material-icons-round">login</span>
+            <span>ログインする</span>
+          </a>
+          <p class="lock-signup">
+            <span>アカウントをお持ちでないですか？</span>
+            <a href="#/login" class="link-accent">新規登録</a>
+          </p>
+        </div>
+
+        <div class="menu-card glass-card" style="margin-top: 1rem;">
+          <a href="#/theme" class="menu-item">
+            <span class="material-icons-round menu-icon">palette</span>
+            <span class="menu-text">テーマ設定</span>
+            <span class="material-icons-round menu-arrow">chevron_right</span>
+          </a>
+        </div>
+
+        <p class="app-version">IzakayaReco Premium v1.0.0</p>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: FAVORITES (Logged In) ==================== -->
+    <div id="page-favorites" class="page">
+      <section class="favorites-page-section">
+        <header class="page-header">
+          <h1 class="page-header-title">お気に入り</h1>
+        </header>
+        <!-- Sort Bar -->
+        <div class="fav-sort-bar hidden" id="fav-sort-bar">
+          <span class="fav-sort-label">並び替え:</span>
+          <select id="fav-sort-select" class="text-input sort-select">
+            <option value="added">追加順</option>
+            <option value="rating">星評価順</option>
+            <option value="visits">来店回数順</option>
+          </select>
+        </div>
+        <div id="favorites-list" class="favorites-list"></div>
+        <div class="empty-state glass-card">
+          <span class="material-icons-round" style="font-size: 3rem; color: var(--primary);">​favorite_border</span>
+          <p>お気に入りの店舗はまだありません</p>
+          <span class="text-muted-sm">気になるお店を見つけたら、お気に入りに追加しましょう</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: DETAIL ==================== -->
+    <div id="page-detail" class="page">
+      <section class="detail-page">
+        <header class="page-header">
+          <button class="icon-btn back-btn" onclick="history.back()">
+            <span class="material-icons-round">arrow_back</span>
+          </button>
+          <h1 class="page-header-title">店舗詳細</h1>
+        </header>
+        <div id="detail-content"></div>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: FAVORITES LOCKED (Not Logged In) ==================== -->
+    <div id="page-favorites-locked" class="page">
+      <section class="favorites-page-section">
+        <header class="page-header">
+          <h1 class="page-header-title">お気に入り</h1>
+        </header>
+        <div class="login-required-card glass-card">
+          <div class="lock-icon-container">
+            <span class="material-icons-round lock-icon">lock</span>
+          </div>
+          <h2 class="lock-title">ログインが必要です</h2>
+          <p class="lock-description">お気に入り機能を使うには、<br>ログインしてください。</p>
+          <button class="btn primary-btn btn-block" id="fav-login-btn">
+            <span class="material-icons-round">login</span>
+            <span>ログインする</span>
+          </button>
+          <p class="lock-signup">
+            <span>アカウントをお持ちでないですか？</span>
+            <a href="#/login" class="link-accent">新規登録</a>
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: REVIEW HISTORY ==================== -->
+    <div id="page-review-history" class="page">
+      <section class="history-page">
+        <header class="page-header">
+          <button class="icon-btn back-btn" onclick="history.back()">
+            <span class="material-icons-round">arrow_back</span>
+          </button>
+          <h1 class="page-header-title">レビュー履歴</h1>
+        </header>
+        <div id="review-history-list" class="history-list"></div>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: VISIT HISTORY ==================== -->
+    <div id="page-visit-history" class="page">
+      <section class="history-page">
+        <header class="page-header">
+          <button class="icon-btn back-btn" onclick="history.back()">
+            <span class="material-icons-round">arrow_back</span>
+          </button>
+          <h1 class="page-header-title">来店履歴</h1>
+        </header>
+        <div id="visit-history-list" class="history-list"></div>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE: SEARCH HISTORY ==================== -->
+    <div id="page-search-history" class="page">
+      <section class="history-page">
+        <header class="page-header">
+          <button class="icon-btn back-btn" onclick="history.back()">
+            <span class="material-icons-round">arrow_back</span>
+          </button>
+          <h1 class="page-header-title">検索履歴</h1>
+        </header>
+        <div id="search-history-list" class="history-list"></div>
+      </section>
+    </div>
+
+
+    <!-- ==================== PAGE: THEME SETTINGS ==================== -->
+    <div id="page-theme" class="page">
+      <section class="theme-page">
+        <header class="page-header">
+          <button class="icon-btn back-btn" onclick="history.back()">
+            <span class="material-icons-round">arrow_back</span>
+          </button>
+          <h1 class="page-header-title">テーマ設定</h1>
+        </header>
+        <div id="theme-options" class="theme-options-grid"></div>
+      </section>
+    </div>
+
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
