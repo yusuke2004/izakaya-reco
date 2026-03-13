@@ -37,8 +37,7 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get(
-        "ALLOWED_HOSTS",
-        "localhost,127.0.0.1,izakaya-reco.onrender.com"
+        "ALLOWED_HOSTS", "localhost,127.0.0.1,izakaya-reco.onrender.com"
     ).split(",")
     if host.strip()
 ]
@@ -74,7 +73,8 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # frontend/build または frontend/dist にビルドされた index.html を置く
+        "DIRS": [BASE_DIR / "frontend" / "dist"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -164,6 +164,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# 追加: フロントエンドのビルド済みファイルを静的検索パスに追加
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "dist"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -173,7 +175,11 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-] + [f"https://{host}" for host in ALLOWED_HOSTS if host not in ["localhost", "127.0.0.1"]]
+] + [
+    f"https://{host}"
+    for host in ALLOWED_HOSTS
+    if host not in ["localhost", "127.0.0.1"]
+]
 
 # Session settings for cross-origin
 SESSION_COOKIE_SAMESITE = "Lax"
