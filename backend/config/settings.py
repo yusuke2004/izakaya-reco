@@ -34,8 +34,14 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1,izakaya-reco.onrender.com"
+    ).split(",")
+    if host.strip()
+]
 
 # Application definition
 
@@ -167,9 +173,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-] + [
-    f"https://{host}" for host in os.environ.get("ALLOWED_HOSTS", "").split(",") if host
-]
+] + [f"https://{host}" for host in ALLOWED_HOSTS if host not in ["localhost", "127.0.0.1"]]
 
 # Session settings for cross-origin
 SESSION_COOKIE_SAMESITE = "Lax"
